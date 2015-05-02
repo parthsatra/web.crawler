@@ -7,8 +7,6 @@ import storm.trident.operation.BaseFunction;
 import storm.trident.operation.TridentCollector;
 import storm.trident.tuple.TridentTuple;
 
-import java.util.Arrays;
-
 
 /**
  * Created by Abidaan Nagawkar on 5/1/15.
@@ -25,9 +23,15 @@ public class WikipediaParser extends BaseFunction {
         StringBuilder builder = new StringBuilder();
         for(String s: data.getCategories()){
             builder.append(s);
-            builder.append("||");
+            builder.append(" ");
         }
 
-        collector.emit(new Values(data.getBaseurl(), builder.toString().trim(), Arrays.asList(data.getUrls())));
+        StringBuilder sb = new StringBuilder();
+        for(String url : data.getUrls()) {
+            sb.append(url);
+            sb.append(" ");
+        }
+
+        collector.emit(new Values(data.getBaseurl(), builder.toString().trim(), sb.toString()));
     }
 }

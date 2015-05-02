@@ -18,12 +18,15 @@ import storm.kafka.StringScheme;
 import storm.kafka.ZkHosts;
 import storm.kafka.trident.OpaqueTridentKafkaSpout;
 import storm.kafka.trident.TridentKafkaConfig;
+import storm.starter.web.crawler.src.filter.PrintFilter;
 import storm.starter.web.crawler.src.function.DocumentTupleMapper;
 import storm.starter.web.crawler.src.function.GenerateQuery;
+import storm.starter.web.crawler.src.function.PrepareESDocument;
 import storm.starter.web.crawler.src.function.WikipediaParser;
 import storm.starter.web.crawler.src.state.*;
 import storm.trident.TridentState;
 import storm.trident.TridentTopology;
+import storm.trident.operation.builtin.FilterNull;
 import storm.trident.state.StateFactory;
 import storm.trident.testing.Split;
 
@@ -73,7 +76,7 @@ public class WebCrawlerTopology {
         // Topology that checks if the URL is already present.
         TridentState bloomFilterDBMS = topology.newStream("bloomfilter", spoutWiki1)
                 .each(spoutWiki1.getOutputFields(), new WikipediaParser(), new Fields("Url", "categories", "outgoingUrls"))
-
+                .each(new Fields("Url", "categories", "outgoingUrls"), new PrintFilter())
                 .partitionPersist(bloomFilterStateFactory, new Fields("Url"), new BloomFilterStateUpdater());
 
         TridentState countminDBMS = topology.newStream("countmin", spoutWiki2)
@@ -82,7 +85,8 @@ public class WebCrawlerTopology {
 
         TridentState esStateDBMS = topology.newStream("esearch", spoutWiki3)
                 .each(spoutWiki3.getOutputFields(), new WikipediaParser(), new Fields("Url", "categories", "outgoingUrls"))
-                .partitionPersist(esStateFactory, new Fields("Url", "categories"), new ESIndexUpdater(new DocumentTupleMapper()));
+                .each(new Fields("Url", "categories"), new PrepareESDocument(), new Fields("id", "source"))
+                .partitionPersist(esStateFactory, new Fields("id", "source"), new ESIndexUpdater(new DocumentTupleMapper()), new Fields());
 
         // DRPC query that returns if the URL is already visited.
         topology.newDRPCStream("check_url", drpc)
@@ -92,9 +96,12 @@ public class WebCrawlerTopology {
 
         topology.newDRPCStream("search", drpc)
                 .each(new Fields("args"), new GenerateQuery(), new Fields("query", "index", "type"))
+                .each(new Fields("query", "index", "type"), new PrintFilter())
                 .stateQuery(staticEsState, new Fields("query", "index", "type"), new QuerySearchIndexQuery(), new Fields("Urls"))
+                .each(new Fields("Urls"), new FilterNull())
+                .each(new Fields("Urls"), new PrintFilter())
                 //.stateQuery(countminDBMS, new Fields("Urls"), new CountMinQuery(), new Fields("result"))
-                .project(new Fields("result"));
+                .project(new Fields("Urls"));
 
         return topology.build();
     }
@@ -110,16 +117,16 @@ public class WebCrawlerTopology {
         LocalDRPC drpc = new LocalDRPC();
 
         //Running storm distributed
-        conf.setNumWorkers(3);
-        StormSubmitter.submitTopologyWithProgressBar("Web_Crawler", conf, buildTopology(args, null));
+//        conf.setNumWorkers(3);
+//        StormSubmitter.submitTopologyWithProgressBar("Web_Crawler", conf, buildTopology(args, null));
 
         // Local cluster
-//        cluster.submitTopology("Web_Crawler", conf, buildTopology(args, drpc));
-//
-//        while(true) {
-//            System.out.println("DRPC RESULT: " + drpc.execute("check_url", "California_Chrome"));
-//            Thread.sleep(3000);
-//        }
+        cluster.submitTopology("Web_Crawler", conf, buildTopology(args, drpc));
+
+        while(true) {
+            System.out.println("DRPC RESULT: " + drpc.execute("search", "chinese"));
+            Thread.sleep(3000);
+        }
 
     }
 }

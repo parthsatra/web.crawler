@@ -30,7 +30,7 @@ import java.util.Random;
 public class CountMinSketchState implements State, Serializable {
 
     public static final long PRIME_MODULUS = (1L << 31) - 1;
-
+    private static final long serialVersionUID = 1L;
     int depth;
     int width;
     long[][] table;

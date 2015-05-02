@@ -9,7 +9,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Created by parthsatra on 5/1/15.
+ * Created by Parth Satra on 5/1/15.
  */
 public class BloomFilterStateQuery extends BaseQueryFunction<BloomFilterState, String> {
     @java.lang.Override
