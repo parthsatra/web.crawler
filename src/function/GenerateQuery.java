@@ -1,6 +1,7 @@
 package storm.starter.web.crawler.src.function;
 
 import backtype.storm.tuple.Values;
+import org.elasticsearch.common.collect.Lists;
 import org.elasticsearch.index.query.QueryBuilders;
 import storm.trident.operation.BaseFunction;
 import storm.trident.operation.TridentCollector;
@@ -14,7 +15,8 @@ public class GenerateQuery extends BaseFunction {
     @Override
     public void execute(TridentTuple tridentTuple, TridentCollector tridentCollector) {
         String category = tridentTuple.getString(0);
+        //String query = QueryBuilders.matchAllQuery().buildAsBytes().toUtf8();
         String query = QueryBuilders.termQuery("categories", category).buildAsBytes().toUtf8();
-        tridentCollector.emit(new Values(query, Constants.INDEX, Constants.TYPE));
+        tridentCollector.emit(new Values(query, Lists.newArrayList(Constants.INDEX), Lists.newArrayList(Constants.TYPE)));
     }
 }

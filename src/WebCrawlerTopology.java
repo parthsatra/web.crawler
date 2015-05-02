@@ -13,6 +13,7 @@ import com.github.fhuss.storm.elasticsearch.state.ESIndexUpdater;
 import com.github.fhuss.storm.elasticsearch.state.QuerySearchIndexQuery;
 import org.elasticsearch.common.settings.ImmutableSettings;
 import org.elasticsearch.common.settings.Settings;
+import org.json.simple.JSONObject;
 import storm.kafka.BrokerHosts;
 import storm.kafka.StringScheme;
 import storm.kafka.ZkHosts;
@@ -70,8 +71,8 @@ public class WebCrawlerTopology {
                 .put("storm.elasticsearch.cluster.name", "elasticsearch")
                 .put("storm.elasticsearch.hosts", "152.46.18.173:9300")
                 .build();
-        StateFactory esStateFactory = new ESIndexState.Factory<String>(new ClientFactory.NodeClient(esSettings.getAsMap()), String.class);
-        TridentState staticEsState = topology.newStaticState(new ESIndexState.Factory<String>(new ClientFactory.NodeClient(esSettings.getAsMap()), String.class));
+        StateFactory esStateFactory = new ESIndexState.Factory<JSONObject>(new ClientFactory.NodeClient(esSettings.getAsMap()), JSONObject.class);
+        TridentState staticEsState = topology.newStaticState(esStateFactory);
 
         // Topology that checks if the URL is already present.
         TridentState bloomFilterDBMS = topology.newStream("bloomfilter", spoutWiki1)
@@ -86,7 +87,7 @@ public class WebCrawlerTopology {
         TridentState esStateDBMS = topology.newStream("esearch", spoutWiki3)
                 .each(spoutWiki3.getOutputFields(), new WikipediaParser(), new Fields("Url", "categories", "outgoingUrls"))
                 .each(new Fields("Url", "categories"), new PrepareESDocument(), new Fields("id", "source"))
-                .partitionPersist(esStateFactory, new Fields("id", "source"), new ESIndexUpdater(new DocumentTupleMapper()), new Fields());
+                .partitionPersist(esStateFactory, new Fields("id", "source"), new ESIndexUpdater<String>(new DocumentTupleMapper()), new Fields());
 
         // DRPC query that returns if the URL is already visited.
         topology.newDRPCStream("check_url", drpc)
@@ -95,9 +96,9 @@ public class WebCrawlerTopology {
                 .project(new Fields("result"));
 
         topology.newDRPCStream("search", drpc)
-                .each(new Fields("args"), new GenerateQuery(), new Fields("query", "index", "type"))
-                .each(new Fields("query", "index", "type"), new PrintFilter())
-                .stateQuery(staticEsState, new Fields("query", "index", "type"), new QuerySearchIndexQuery(), new Fields("Urls"))
+                .each(new Fields("args"), new GenerateQuery(), new Fields("query", "indices", "types"))
+                .each(new Fields("query", "indices", "types"), new PrintFilter())
+                .stateQuery(staticEsState, new Fields("query", "indices", "types"), new QuerySearchIndexQuery(), new Fields("Urls"))
                 .each(new Fields("Urls"), new FilterNull())
                 .each(new Fields("Urls"), new PrintFilter())
                 //.stateQuery(countminDBMS, new Fields("Urls"), new CountMinQuery(), new Fields("result"))
@@ -124,7 +125,7 @@ public class WebCrawlerTopology {
         cluster.submitTopology("Web_Crawler", conf, buildTopology(args, drpc));
 
         while(true) {
-            System.out.println("DRPC RESULT: " + drpc.execute("search", "chinese"));
+            System.out.println("DRPC RESULT: " + drpc.execute("search", "games"));
             Thread.sleep(3000);
         }
 
