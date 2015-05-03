@@ -17,13 +17,8 @@ public class PrepareESDocument extends BaseFunction {
         String id = JSONObject.escape(tridentTuple.getString(0));
         String categories = JSONObject.escape(tridentTuple.getString(1));
 
-        String source = "{\"categories\":\""+categories+"\"}";
-/*
-        JSONObject json = new JSONObject();
-        json.put("categories", categories);
-*/
+        String source = "{\"url\":\""+id+"\",\"categories\":\""+categories+"\"}";
 
         tridentCollector.emit(new Values(id, source));
-
     }
 }

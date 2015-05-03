@@ -97,12 +97,12 @@ public class WebCrawlerTopology {
 
         topology.newDRPCStream("search", drpc)
                 .each(new Fields("args"), new GenerateQuery(), new Fields("query", "indices", "types"))
-                .each(new Fields("query", "indices", "types"), new PrintFilter())
+                //.each(new Fields("query", "indices", "types"), new PrintFilter())
                 .stateQuery(staticEsState, new Fields("query", "indices", "types"), new QuerySearchIndexQuery(), new Fields("Urls"))
                 .each(new Fields("Urls"), new FilterNull())
-                .each(new Fields("Urls"), new PrintFilter())
-                //.stateQuery(countminDBMS, new Fields("Urls"), new CountMinQuery(), new Fields("result"))
-                .project(new Fields("Urls"));
+                //.each(new Fields("Urls"), new PrintFilter())
+                .stateQuery(countminDBMS, new Fields("Urls"), new CountMinQuery(), new Fields("result"))
+                .project(new Fields("result"));
 
         return topology.build();
     }
@@ -119,15 +119,17 @@ public class WebCrawlerTopology {
 
         //Running storm distributed
 //        conf.setNumWorkers(3);
-//        StormSubmitter.submitTopologyWithProgressBar("Web_Crawler", conf, buildTopology(args, null));
+        //StormSubmitter.submitTopologyWithProgressBar("web_crawler", conf, buildTopology(args, null));
 
         // Local cluster
         cluster.submitTopology("Web_Crawler", conf, buildTopology(args, drpc));
 
         while(true) {
-            System.out.println("DRPC RESULT: " + drpc.execute("search", "games"));
+            System.out.println("DRPC RESULT: " + drpc.execute("search", "ethnic"));
             Thread.sleep(3000);
         }
+
+        //System.out.println("Booyeah");
 
     }
 }

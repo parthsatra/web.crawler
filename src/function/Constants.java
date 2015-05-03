@@ -6,4 +6,5 @@ package storm.starter.web.crawler.src.function;
 public class Constants {
     public static final String INDEX = "web_crawler";
     public static final String TYPE = "invertedIndex";
+    public static final int QSIZE = 10;
 }
