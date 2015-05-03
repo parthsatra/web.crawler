@@ -14,6 +14,8 @@ public class PrepareESDocument extends BaseFunction {
 
     @Override
     public void execute(TridentTuple tridentTuple, TridentCollector tridentCollector) {
+
+        //Define the document that will be stored in ElasticSearch
         String id = JSONObject.escape(tridentTuple.getString(0));
         String categories = JSONObject.escape(tridentTuple.getString(1));
 

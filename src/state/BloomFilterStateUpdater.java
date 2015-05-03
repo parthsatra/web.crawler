@@ -14,6 +14,7 @@ public class BloomFilterStateUpdater extends BaseStateUpdater<BloomFilterState> 
 
     @Override
     public void updateState(BloomFilterState bloomFilterState, List<TridentTuple> list, TridentCollector tridentCollector) {
+        //add new URLs to BloomFilter to prevent loop
         for(TridentTuple tuple : list) {
             bloomFilterState.add(tuple.getString(0));
         }

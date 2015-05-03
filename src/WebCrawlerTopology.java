@@ -129,7 +129,5 @@ public class WebCrawlerTopology {
             Thread.sleep(3000);
         }
 
-        //System.out.println("Booyeah");
-
     }
 }

@@ -1,15 +1,12 @@
 package storm.starter.web.crawler.src.state;
 
 import backtype.storm.tuple.Fields;
-import org.json.simple.JSONArray;
-import org.json.simple.JSONValue;
-import org.json.simple.parser.ContainerFactory;
+
 import org.json.simple.parser.JSONParser;
 import storm.trident.state.BaseQueryFunction;
 import storm.trident.tuple.TridentTuple;
 import storm.trident.operation.TridentCollector;
 
-import org.json.simple.parser.ParseException;
 
 import java.io.Serializable;
 import java.util.*;
@@ -26,36 +23,32 @@ import org.json.simple.JSONObject;
 public class CountMinQuery extends BaseQueryFunction<CountMinSketchState, String> {
     public List<String> batchRetrieve(CountMinSketchState state, List<TridentTuple> inputs) {
         List<String> ret = new ArrayList();
+
+        //Priority Queue to sort the URLs based on Page Rank - MAX HEAP
         PriorityQueue<String> myHeap = new PriorityQueue<String>(10, new SketchComparator<String>(state));
 
         for(TridentTuple input: inputs) {
-            JSONParser parser = new JSONParser();
-/*            String jsonString = input.getString(0);
-            System.out.print(jsonString);*/
 
+            //Extract URLs in the request, input is a
             List<Object> jsonObjectList = input.select(new Fields("Urls"));
-            //System.out.println("DEBUG: jsonObjectList = "+jsonObjectList);
 
             for(Object jsonObject : jsonObjectList) {
 
-                //System.out.println("DEBUG CLASS: "+jsonObject.getClass());
-
                 if(jsonObject instanceof JSONObject) {
-                   // System.out.println("DEBUG: It is a JSONObject");
+
+                    //Parse URL from the JSON data
                     JSONObject parsedJSON = (JSONObject)jsonObject;
                     String url = (String) parsedJSON.get("url");
 
+                    //Add URLs to heap to sort them in rank order
                     myHeap.add(url);
-                    //System.out.println("DEBUG: URL TO QUERY - " + url);
-                    //long count = state.estimateCount(url);
-                    //sb.append(count);
                 }
             }
         }
 
 
         long count = 0;
-        System.out.println("DEBUG - QUEUE " + myHeap.toString());
+        //Extract URLs, highest rank first
         while(!myHeap.isEmpty()) {
             String rankUrl = myHeap.poll();
             count = state.estimateCount(rankUrl);
@@ -70,6 +63,7 @@ public class CountMinQuery extends BaseQueryFunction<CountMinSketchState, String
     }
 }
 
+//Custom Comparator to sort elements in the order of their count in Count-min Sketch
 class SketchComparator<T> implements Serializable, Comparator<T> {
     CountMinSketchState sketch;
 

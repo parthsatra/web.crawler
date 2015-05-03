@@ -1,6 +1,5 @@
 package storm.starter.web.crawler.src.state;
 
-import backtype.storm.tuple.Fields;
 import storm.trident.state.BaseStateUpdater;
 import storm.trident.tuple.TridentTuple;
 import storm.trident.operation.TridentCollector;
@@ -8,7 +7,7 @@ import java.util.List;
 
 
 /**
- *@author: aravi5
+ *@author: Abhishek Ravi (aravi5)
  */
 
 public class CountMinSketchUpdater extends BaseStateUpdater<CountMinSketchState> {
@@ -16,26 +15,13 @@ public class CountMinSketchUpdater extends BaseStateUpdater<CountMinSketchState>
 
         for(TridentTuple t: tuples) {
 
-//            System.out.println("DEBUG: TUPLE - " + t.toString());
-            //
-            ////Every tuple is a list of URLs
-            //List<Object> urlList = t.select(new Fields("outgoingUrls"));
-            //
-            //for(Object url : urlList) {
-            ////Add the count for each URL
-            //System.out.println("DEBUG: URL - " + url.toString());
-            //if(url instanceof String) {
-            //System.out.println("DEBUG: Is an instance of String");
-            //state.add((String)url,1);
-            //}
-
             String[] stringArray = t.getString(0).split(" ");
-
+            //For each link present in current URL, increment in-degree
             for(String s : stringArray) {
                 if(!(s.trim().isEmpty())) {
                     state.add(s,1);
                 }
-        }
+            }
 
         }
 

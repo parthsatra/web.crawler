@@ -15,7 +15,8 @@ public class GenerateQuery extends BaseFunction {
     @Override
     public void execute(TridentTuple tridentTuple, TridentCollector tridentCollector) {
         String category = tridentTuple.getString(0);
-        //String query = QueryBuilders.matchAllQuery().buildAsBytes().toUtf8();
+
+        //Create a QueryBuilder to query elasticSearch
         String query = QueryBuilders.termQuery("categories", category).buildAsBytes().toUtf8();
         tridentCollector.emit(new Values(query, Lists.newArrayList(Constants.INDEX), Lists.newArrayList(Constants.TYPE)));
     }
