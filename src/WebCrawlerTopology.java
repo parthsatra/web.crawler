@@ -114,20 +114,21 @@ public class WebCrawlerTopology {
         conf.setMaxSpoutPending(10);
 
         // Configuration for running storm locally.
-        LocalCluster cluster = new LocalCluster();
-        LocalDRPC drpc = new LocalDRPC();
+        //LocalCluster cluster = new LocalCluster();
+        //LocalDRPC drpc = new LocalDRPC();
 
         //Running storm distributed
 //        conf.setNumWorkers(3);
-        //StormSubmitter.submitTopologyWithProgressBar("web_crawler", conf, buildTopology(args, null));
+        StormSubmitter.submitTopologyWithProgressBar("web_crawler", conf, buildTopology(args, null));
 
         // Local cluster
+        /*
         cluster.submitTopology("Web_Crawler", conf, buildTopology(args, drpc));
 
         while(true) {
             System.out.println("DRPC RESULT: " + drpc.execute("search", "ethnic"));
             Thread.sleep(3000);
         }
-
+        */
     }
 }
